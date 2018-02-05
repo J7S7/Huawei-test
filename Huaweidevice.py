@@ -1,1 +1,4 @@
-print "hello world"
+# -*- coding: utf-8 -*-
+import telnetlib
+import re
+
