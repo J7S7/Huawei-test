@@ -20,11 +20,10 @@ class HuaweiSwitch(object):
         #self._authenticate()
         #self._get_hostname()
         self.connected = True
-        a = self._connection.read_all()
-        print('test:',a )
+        print (host,port)
         print 'success'
 
 
 
     #def authenticate(self,username,password):
-       # if
+        #idx, match, text = self.expect(['sername:', 'assword:'], 5)
