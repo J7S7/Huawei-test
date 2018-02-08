@@ -16,11 +16,15 @@ class HuaweiSwitch(object):
         if host is None:
             host = self.host
 
-        self._connection=telnetlib.telnet(host,port,timeout)
-        self._authenticate()
-        self._get_hostname()
+        self._connection=telnetlib.Telnet(host,port,timeout)
+        #self._authenticate()
+        #self._get_hostname()
+        self.connected = True
+        a = self._connection.read_all()
+        print('test:',a )
+        print 'success'
 
 
 
-    def authenticate(self,username,password):
-        if 
+    #def authenticate(self,username,password):
+       # if
