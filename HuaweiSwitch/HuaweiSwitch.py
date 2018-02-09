@@ -72,6 +72,8 @@ class HuaweiSwitch(object):
 
         self._connection.write(text.encode('ascii'))
 
+    def
+
 
 
 
