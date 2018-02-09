@@ -21,14 +21,11 @@ class HuaweiSwitch(object):
         self._connection = telnetlib.Telnet(host, port, timeout)
         self._authenticate()
         self._get_hostname()
-        self.cmd("screen-length disable")
+        self.cmd("screen-length 0 temporary")
+        #self._connection.close()
+        #print self._connection.read_all()
         self.connected = True
         print 'connection success'
-
-    def test(self):
-        # 忽略U和P大小写情况
-        idx, match, text = self._connection.expect(['sername:'], 5)
-        print text
 
     def _authenticate(self):
         idx, match, text = self.expect(['sername:', 'assword:'], 2)
@@ -107,7 +104,7 @@ class HuaweiSwitch(object):
         if 'Error' in ret_text:
             raise InvalidCommand(cmd_text)
         return ret_text
-    
+
 
 
 
