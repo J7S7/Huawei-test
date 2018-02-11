@@ -11,6 +11,10 @@ portlists = test.get_portlists()
 print portlists
 portinfo = test.get_port_info(portlists)
 print portinfo
+portstat = test.get_port_status(portinfo)
+print portstat
+portmaclists = test.get_port_mac(portstat)
+print portmaclists
 
 
 

@@ -136,7 +136,6 @@ class HuaweiSwitch(object):
         # 获取端口列表
         portlists = []
         result = self.cmd('display interface brief')
-        print result
         pattern = re.compile(r'(.*)ethernet(.*)|(.*)trunk(\d+)|loopback(\d+)', re.I)
         for a in result.split():
             b = pattern.match(a)
@@ -148,13 +147,14 @@ class HuaweiSwitch(object):
     def get_port_info(self, port_lists):
         # 获取端口配置信息
         port_info_lists = []
+
         for b in port_lists:
             info = self.cmd('display current-configuration interface ' + b + ' | exclude ' + 'interface')
             infe = info.replace('\n', '')
-            print infe
+            #print infe
             pattern = re.compile(r'#.*#', re.I)
             result = pattern.findall(infe)
-            print result
+            #print result
             port_info_lists.append({
                 "portlist": b,
                 "info": result
@@ -181,7 +181,7 @@ class HuaweiSwitch(object):
                     "status": 1
                 })
             # 准入口
-            elif info.count('dot1x') > 6:
+            elif info.count('dot1x') > 0:
                 port_status_lists.append({
                     "portlist": portlist,
                     "status": 2
@@ -201,4 +201,24 @@ class HuaweiSwitch(object):
 
         return port_status_lists
 
+    def get_port_mac(self, port_status_lists):
+        port_mac_lists = []
 
+        for a in port_status_lists:
+            status = int(a.get('status'))
+            portlist = a.get('portlist')
+            if status < 2:
+                port_mac_lists.append({
+                    "portlist": portlist,
+                    "mac": []
+                })
+
+            else:
+                info = self.cmd('display mac-address ' + portlist)
+                pattern = re.compile(r'(?:\d|\w){4}\-(?:\d|\w){4}\-(?:\d|\w){4}')
+                result = pattern.findall(info)
+                port_mac_lists.append({
+                    "portlist": portlist,
+                    "mac": result
+                })
+        return port_mac_lists
