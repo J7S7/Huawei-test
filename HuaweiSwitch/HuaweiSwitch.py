@@ -22,6 +22,7 @@ class HuaweiSwitch(object):
         self._connection = telnetlib.Telnet(host, port, timeout)
         self._authenticate()
         self._get_hostname()
+        self._super()
         self.cmd("screen-length 0 temporary")
         self.connected = True
         print 'connection success'
@@ -104,7 +105,35 @@ class HuaweiSwitch(object):
             raise InvalidCommand(cmd_text)
         return ret_text
 
+    def _super(self, password=None):
+        if password is not None:
+            self.super_password = password
+        self.write('\n')
+        self.read_until_prompt()
+        self.write("super" + '\n')
+        idx, match, text = self.expect(['>', 'assword:'], 1)
+        if match is None:
+            raise HuaweiSwitchError("无法进入特权模式")
+        else:
+            # 无super密码情况
+            if 'privilege is 3' in text:
+                return
+            # 需要super密码，输入密码
+            elif 'assword' in text:
+                self.write(self.super_password + "\n")
+        idx, match, text = self.expect([">", 'assword:'], 1)
+        # 打印所有匹配到的对象
+        print match.group()
+        if match is None:
+            raise HuaweiSwitchError("尝试super模式时，无法获得反馈", text=None)
+        elif match.group().count('assword') > 0:
+            self.write("\n\n\n")
+            raise HuaweiSwitchError("password错误")
+        elif 'privilege is 3' in text:
+            return
+
     def get_portlists(self):
+        # 获取端口列表
         portlists = []
         result = self.cmd('display interface brief')
         print result
@@ -117,7 +146,59 @@ class HuaweiSwitch(object):
         return portlists
 
     def get_port_info(self, port_lists):
+        # 获取端口配置信息
+        port_info_lists = []
+        for b in port_lists:
+            info = self.cmd('display current-configuration interface ' + b + ' | exclude ' + 'interface')
+            infe = info.replace('\n', '')
+            print infe
+            pattern = re.compile(r'#.*#', re.I)
+            result = pattern.findall(infe)
+            print result
+            port_info_lists.append({
+                "portlist": b,
+                "info": result
+            })
 
+        return port_info_lists
 
+    def get_port_status(self, port_info_lists):
+        port_status_lists = []
+
+        for a in port_info_lists:
+            info = str(a.get('info'))
+            portlist = a.get('portlist')
+            # 关闭
+            if info.count('shutdown') > 0:
+                port_status_lists.append({
+                    "portlist": portlist,
+                    "status": 0
+                })
+            # trunk口
+            elif info.count('trunk') > 0:
+                port_status_lists.append({
+                    "portlist": portlist,
+                    "status": 1
+                })
+            # 准入口
+            elif info.count('dot1x') > 6:
+                port_status_lists.append({
+                    "portlist": portlist,
+                    "status": 2
+                })
+            # 例外口
+            elif info.count('mac-address') > 0:
+                port_status_lists.append({
+                    "portlist": portlist,
+                    "status": 3
+                })
+            # 问题口
+            else:
+                port_status_lists.append({
+                    "portlist": portlist,
+                    "status": 4
+                })
+
+        return port_status_lists
 
 
