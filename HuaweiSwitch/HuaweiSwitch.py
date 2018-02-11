@@ -5,12 +5,13 @@ from Huaweierror import *
 
 
 class HuaweiSwitch(object):
-    def __init__(self, host=None, hostname=None, username=None, password=None, connected=False, port_lists=None):
+    def __init__(self, host=None, hostname=None, username=None, super_password=None, password=None, connected=False, port_lists=None):
         self.host = host
         self.hostname = hostname
         self.username = username
         self.password = password
         self.connected = connected
+        self.super_password = super_password
         self._connection = None
         self.port_lists = port_lists
 
@@ -22,8 +23,6 @@ class HuaweiSwitch(object):
         self._authenticate()
         self._get_hostname()
         self.cmd("screen-length 0 temporary")
-        #self._connection.close()
-        #print self._connection.read_all()
         self.connected = True
         print 'connection success'
 
@@ -95,15 +94,29 @@ class HuaweiSwitch(object):
         self.write(cmd_text + '\n')
         text = self.read_until_prompt()
         ret_text = ''
-        # 目的不明？
+        # 去除多余回车
         for a in text.split('\n')[:-1]:
             ret_text += a + '\n'
         # 获取当前设备名称
         if 'hostname' in cmd_text:
             self._get_hostname()
-        if 'Error' in ret_text:
+        if 'rejected' in ret_text:
             raise InvalidCommand(cmd_text)
         return ret_text
+
+    def get_portlists(self):
+        portlists = []
+        result = self.cmd('display interface brief')
+        print result
+        pattern = re.compile(r'(.*)ethernet(.*)|(.*)trunk(\d+)|loopback(\d+)', re.I)
+        for a in result.split():
+            b = pattern.match(a)
+            if b is not None:
+                c = b.group()
+                portlists.append(c)
+        return portlists
+
+    def get_port_info(self, port_lists):
 
 
 
