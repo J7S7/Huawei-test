@@ -203,7 +203,7 @@ class HuaweiSwitch(object):
 
     def get_port_mac(self, port_status_lists):
         port_mac_lists = []
-
+        pattern = re.compile(r'(?:\d|\w){4}\-(?:\d|\w){4}\-(?:\d|\w){4}')
         for a in port_status_lists:
             status = int(a.get('status'))
             portlist = a.get('portlist')
@@ -215,10 +215,32 @@ class HuaweiSwitch(object):
 
             else:
                 info = self.cmd('display mac-address ' + portlist)
-                pattern = re.compile(r'(?:\d|\w){4}\-(?:\d|\w){4}\-(?:\d|\w){4}')
                 result = pattern.findall(info)
                 port_mac_lists.append({
                     "portlist": portlist,
                     "mac": result
                 })
         return port_mac_lists
+
+    def get_arp(self, port_mac_lists):
+        port_arp_lists = []
+        # pattern = re.compile(r'^(25[0-5]|2[0-4]\d|[0-1]\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d\d|[1-9]?\d)')
+        pattern = re.compile(r'\d+\.\d+\.\d+\.\d+')
+        for a in port_mac_lists:
+            maclist = a.get('mac')
+            print maclist
+            for b in maclist:
+                info = self.cmd('display arp | include ' + b)
+                result = pattern.findall(info)
+                print b
+                if result:
+                    port_arp_lists.append({
+                        "ip": result,
+                        "mac": b
+                    })
+                else:
+                    port_arp_lists.append({
+                        "ip": 'null',
+                        "mac": b
+                    })
+        return port_arp_lists
